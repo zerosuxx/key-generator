@@ -482,7 +482,7 @@
       </div>
 
       <div class="form-group">
-        <label for="keySize">Key Size</label>
+        <label for="keySizeContainer">Key Size</label>
         <div id="keySizeContainer">
           <select id="ecdsaSize">
             <option value="256">256-bit (P-256 / secp256r1)</option>
@@ -567,253 +567,254 @@
   </div>
 
   <script>
-    const algorithmSelect = document.getElementById('algorithm');
-    const keySizeContainer = document.getElementById('keySizeContainer');
-    const sshFormatCheckbox = document.getElementById('sshFormat');
-    const generateBtn = document.getElementById('generateBtn');
-    const btnContent = document.getElementById('btnContent');
-    const errorDiv = document.getElementById('error');
-    const publicKeyTextarea = document.getElementById('publicKey');
-    const privateKeyTextarea = document.getElementById('privateKey');
+    /* =========================================================
+     * DOM REFERENCES
+     * ======================================================= */
+    const $ = (id) => document.getElementById(id);
 
-    const ecdsaCurveMap = { '256': 'P-256', '384': 'P-384', '521': 'P-521' };
-    const sshCurveNames = { '256': 'nistp256', '384': 'nistp384', '521': 'nistp521' };
+    const ui = {
+      algorithm: $('algorithm'),
+      keySizeContainer: $('keySizeContainer'),
+      sshFormat: $('sshFormat'),
+      generateBtn: $('generateBtn'),
+      btnContent: $('btnContent'),
+      error: $('error'),
+      publicKey: $('publicKey'),
+      privateKey: $('privateKey'),
+    };
 
-    function copyToClipboard(textareaId, btnId) {
-      const textarea = document.getElementById(textareaId);
-      const btn = document.getElementById(btnId);
-      const text = textarea.value;
-      
-      if (!text) return;
-      
-      navigator.clipboard.writeText(text).then(() => {
-        btn.classList.add('copied');
-        btn.querySelector('span').textContent = 'Copied!';
-        
-        setTimeout(() => {
-          btn.classList.remove('copied');
-          btn.querySelector('span').textContent = 'Copy';
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy:', err);
-      });
+    /* =========================================================
+     * CONSTANTS
+     * ======================================================= */
+    const ECDSA_CURVES = {
+      '256': 'P-256',
+      '384': 'P-384',
+      '521': 'P-521',
+    };
+
+    const SSH_CURVE_NAMES = {
+      '256': 'nistp256',
+      '384': 'nistp384',
+      '521': 'nistp521',
+    };
+
+    /* =========================================================
+     * UI HELPERS
+     * ======================================================= */
+    function setLoading(isLoading) {
+      ui.generateBtn.disabled = isLoading;
+      ui.btnContent.innerHTML = isLoading
+        ? `
+      <svg class="spinner" viewBox="0 0 24 24" fill="none">
+        <circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path style="opacity:.75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+      Generating...
+    `
+        : 'Generate Key Pair';
     }
 
-    function downloadKey(textareaId, type) {
-      const textarea = document.getElementById(textareaId);
-      const text = textarea.value;
-      
-      if (!text) return;
-      
-      const isSSH = sshFormatCheckbox.checked && type === 'public';
-      const algo = algorithmSelect.value.toLowerCase();
-      let filename;
-      
-      if (type === 'public') {
-        filename = isSSH ? `id_${algo}.pub` : `${algo}_public.pem`;
-      } else {
-        filename = `${algo}_private.pem`;
-      }
-      
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    function showError(message) {
+      ui.error.textContent = message;
+      ui.error.classList.add('show');
     }
 
+    function clearOutput() {
+      ui.error.classList.remove('show');
+      ui.publicKey.value = '';
+      ui.privateKey.value = '';
+    }
+
+    /* =========================================================
+     * KEY SIZE SELECTION
+     * ======================================================= */
     function updateKeySizeOptions() {
-      const algo = algorithmSelect.value;
+      const algo = ui.algorithm.value;
+
       if (algo === 'ED25519') {
-        keySizeContainer.innerHTML = '<div class="disabled-select">256-bit (Fixed)</div>';
-      } else if (algo === 'ECDSA') {
-        keySizeContainer.innerHTML = `
-          <select id="ecdsaSize">
-            <option value="256">256-bit (P-256 / secp256r1)</option>
-            <option value="384">384-bit (P-384 / secp384r1)</option>
-            <option value="521">521-bit (P-521 / secp521r1)</option>
-          </select>
-        `;
-      } else {
-        keySizeContainer.innerHTML = `
-          <select id="rsaSize">
-            <option value="1024">1024-bit</option>
-            <option value="2048" selected>2048-bit (Recommended)</option>
-            <option value="4096">4096-bit</option>
-          </select>
-        `;
+        ui.keySizeContainer.innerHTML =
+          `<div class="disabled-select">256-bit (Fixed)</div>`;
+        return;
       }
-    }
 
-    algorithmSelect.addEventListener('change', updateKeySizeOptions);
-
-    function arrayBufferToBase64(buffer) {
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      if (algo === 'ECDSA') {
+        ui.keySizeContainer.innerHTML = `
+      <select id="ecdsaSize">
+        <option value="256">256-bit (P-256)</option>
+        <option value="384">384-bit (P-384)</option>
+        <option value="521">521-bit (P-521)</option>
+      </select>
+    `;
+        return;
       }
-      return btoa(binary);
+
+      ui.keySizeContainer.innerHTML = `
+    <select id="rsaSize">
+      <option value="1024">1024-bit</option>
+      <option value="2048" selected>2048-bit (Recommended)</option>
+      <option value="4096">4096-bit</option>
+    </select>
+  `;
     }
 
-    function formatPEM(base64, type) {
-      const lines = base64.match(/.{1,64}/g) || [];
-      return `-----BEGIN ${type} KEY-----\n${lines.join('\n')}\n-----END ${type} KEY-----`;
-    }
+    /* =========================================================
+     * UTILS
+     * ======================================================= */
+    const bufferToBase64 = (buffer) =>
+      btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-    function encodeSSHString(str) {
-      const encoder = new TextEncoder();
-      const strBytes = encoder.encode(str);
-      const result = new Uint8Array(4 + strBytes.length);
-      const view = new DataView(result.buffer);
-      view.setUint32(0, strBytes.length, false);
-      result.set(strBytes, 4);
-      return result;
-    }
+    const formatPEM = (base64, type) =>
+      `-----BEGIN ${type} KEY-----\n${
+        base64.match(/.{1,64}/g).join('\n')
+      }\n-----END ${type} KEY-----`;
 
-    function encodeSSHBytes(bytes) {
-      const result = new Uint8Array(4 + bytes.length);
-      const view = new DataView(result.buffer);
-      view.setUint32(0, bytes.length, false);
-      result.set(bytes, 4);
-      return result;
-    }
+    const decodeBase64Url = (str) =>
+      Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
 
-    function encodeSSHMpint(bytes) {
-      if (bytes[0] & 0x80) {
-        const padded = new Uint8Array(bytes.length + 1);
-        padded[0] = 0;
-        padded.set(bytes, 1);
-        bytes = padded;
-      }
-      return encodeSSHBytes(bytes);
-    }
+    /* =========================================================
+     * SSH ENCODING
+     * ======================================================= */
+    const ssh = {
+      string: (str) => {
+        const bytes = new TextEncoder().encode(str);
+        return new Uint8Array([
+          ...new Uint8Array(new Uint32Array([bytes.length]).buffer).reverse(),
+          ...bytes,
+        ]);
+      },
 
-    async function formatSSHPublicKey(publicKey, algo, curveSize) {
+      bytes: (bytes) => {
+        const len = bytes.length;
+        return new Uint8Array([
+          ...new Uint8Array(new Uint32Array([len]).buffer).reverse(),
+          ...bytes,
+        ]);
+      },
+
+      mpint: (bytes) => {
+        if (bytes[0] & 0x80) bytes = Uint8Array.from([0, ...bytes]);
+        return ssh.bytes(bytes);
+      },
+    };
+
+    /* =========================================================
+     * SSH PUBLIC KEY FORMATTERS
+     * ======================================================= */
+    async function formatSSHPublicKey(publicKey, algo, ecdsaSize) {
       if (algo === 'RSA') {
         const jwk = await crypto.subtle.exportKey('jwk', publicKey);
-        const e = new Uint8Array(atob(jwk.e.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
-        const n = new Uint8Array(atob(jwk.n.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
-        const keyType = encodeSSHString('ssh-rsa');
-        const eEncoded = encodeSSHMpint(e);
-        const nEncoded = encodeSSHMpint(n);
-        const blob = new Uint8Array(keyType.length + eEncoded.length + nEncoded.length);
-        blob.set(keyType, 0);
-        blob.set(eEncoded, keyType.length);
-        blob.set(nEncoded, keyType.length + eEncoded.length);
-        return `ssh-rsa ${arrayBufferToBase64(blob.buffer)}`;
-      } else if (algo === 'ECDSA') {
-        const jwk = await crypto.subtle.exportKey('jwk', publicKey);
-        const x = new Uint8Array(atob(jwk.x.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
-        const y = new Uint8Array(atob(jwk.y.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
-        const curveName = sshCurveNames[curveSize];
-        const keyType = `ecdsa-sha2-${curveName}`;
-        const point = new Uint8Array(1 + x.length + y.length);
-        point[0] = 0x04;
-        point.set(x, 1);
-        point.set(y, 1 + x.length);
-        const keyTypeEncoded = encodeSSHString(keyType);
-        const curveEncoded = encodeSSHString(curveName);
-        const pointEncoded = encodeSSHBytes(point);
-        const blob = new Uint8Array(keyTypeEncoded.length + curveEncoded.length + pointEncoded.length);
-        blob.set(keyTypeEncoded, 0);
-        blob.set(curveEncoded, keyTypeEncoded.length);
-        blob.set(pointEncoded, keyTypeEncoded.length + curveEncoded.length);
-        return `${keyType} ${arrayBufferToBase64(blob.buffer)}`;
-      } else {
-        const raw = await crypto.subtle.exportKey('raw', publicKey);
-        const rawBytes = new Uint8Array(raw);
-        const keyType = encodeSSHString('ssh-ed25519');
-        const keyData = encodeSSHBytes(rawBytes);
-        const blob = new Uint8Array(keyType.length + keyData.length);
-        blob.set(keyType, 0);
-        blob.set(keyData, keyType.length);
-        return `ssh-ed25519 ${arrayBufferToBase64(blob.buffer)}`;
+        const e = ssh.mpint(decodeBase64Url(jwk.e));
+        const n = ssh.mpint(decodeBase64Url(jwk.n));
+        const blob = new Uint8Array([
+          ...ssh.string('ssh-rsa'),
+          ...e,
+          ...n,
+        ]);
+        return `ssh-rsa ${bufferToBase64(blob)}`;
       }
+
+      if (algo === 'ECDSA') {
+        const jwk = await crypto.subtle.exportKey('jwk', publicKey);
+        const x = decodeBase64Url(jwk.x);
+        const y = decodeBase64Url(jwk.y);
+        const curve = SSH_CURVE_NAMES[ecdsaSize];
+        const point = new Uint8Array([0x04, ...x, ...y]);
+
+        const blob = new Uint8Array([
+          ...ssh.string(`ecdsa-sha2-${curve}`),
+          ...ssh.string(curve),
+          ...ssh.bytes(point),
+        ]);
+
+        return `ecdsa-sha2-${curve} ${bufferToBase64(blob)}`;
+      }
+
+      const raw = new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
+      const blob = new Uint8Array([
+        ...ssh.string('ssh-ed25519'),
+        ...ssh.bytes(raw),
+      ]);
+      return `ssh-ed25519 ${bufferToBase64(blob)}`;
     }
 
+    /* =========================================================
+     * KEY GENERATION
+     * ======================================================= */
+    async function generateKeyPair() {
+      const algo = ui.algorithm.value;
+      const ecdsaSize = $('ecdsaSize')?.value ?? '256';
+      const rsaSize = $('rsaSize')?.value ?? '2048';
+
+      if (algo === 'ECDSA') {
+        return crypto.subtle.generateKey(
+          { name: 'ECDSA', namedCurve: ECDSA_CURVES[ecdsaSize] },
+          true,
+          ['sign', 'verify']
+        );
+      }
+
+      if (algo === 'ED25519') {
+        return crypto.subtle.generateKey(
+          { name: 'Ed25519' },
+          true,
+          ['sign', 'verify']
+        );
+      }
+
+      return crypto.subtle.generateKey(
+        {
+          name: 'RSA-OAEP',
+          modulusLength: Number(rsaSize),
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: 'SHA-256',
+        },
+        true,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    /* =========================================================
+     * MAIN HANDLER
+     * ======================================================= */
     async function generateKeys() {
-      const algo = algorithmSelect.value;
-      const sshFormat = sshFormatCheckbox.checked;
-      
-      generateBtn.disabled = true;
-      btnContent.innerHTML = `
-        <svg class="spinner" viewBox="0 0 24 24" fill="none">
-          <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-        </svg>
-        Generating...
-      `;
-      errorDiv.classList.remove('show');
-      publicKeyTextarea.value = '';
-      privateKeyTextarea.value = '';
-
       try {
-        let keyPair;
-        let ecdsaSize = '256';
-        let rsaSize = '2048';
+        clearOutput();
+        setLoading(true);
 
-        const ecdsaSizeEl = document.getElementById('ecdsaSize');
-        const rsaSizeEl = document.getElementById('rsaSize');
-        if (ecdsaSizeEl) ecdsaSize = ecdsaSizeEl.value;
-        if (rsaSizeEl) rsaSize = rsaSizeEl.value;
+        const keyPair = await generateKeyPair();
 
-        if (algo === 'ECDSA') {
-          keyPair = await crypto.subtle.generateKey(
-            { name: 'ECDSA', namedCurve: ecdsaCurveMap[ecdsaSize] },
-            true,
-            ['sign', 'verify']
-          );
-        } else if (algo === 'ED25519') {
-          keyPair = await crypto.subtle.generateKey(
-            { name: 'Ed25519' },
-            true,
-            ['sign', 'verify']
+        const privateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), 'PRIVATE');
+
+        if (ui.sshFormat.checked) {
+          ui.publicKey.value = await formatSSHPublicKey(
+            keyPair.publicKey,
+            ui.algorithm.value,
+            $('ecdsaSize')?.value
           );
         } else {
-          keyPair = await crypto.subtle.generateKey(
-            {
-              name: 'RSA-OAEP',
-              modulusLength: parseInt(rsaSize),
-              publicExponent: new Uint8Array([1, 0, 1]),
-              hash: 'SHA-256'
-            },
-            true,
-            ['encrypt', 'decrypt']
-          );
-        }
-
-        const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-        const privateKeyBase64 = arrayBufferToBase64(privateKeyBuffer);
-        privateKeyTextarea.value = formatPEM(privateKeyBase64, 'PRIVATE');
-
-        if (sshFormat) {
-          const sshPublicKey = await formatSSHPublicKey(keyPair.publicKey, algo, ecdsaSize);
-          publicKeyTextarea.value = sshPublicKey;
-        } else {
-          const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
-          const publicKeyBase64 = arrayBufferToBase64(publicKeyBuffer);
-          publicKeyTextarea.value = formatPEM(publicKeyBase64, 'PUBLIC');
+          const publicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+          ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
         }
       } catch (err) {
         console.error(err);
-        if (algo === 'ED25519') {
-          errorDiv.textContent = 'ED25519 is not supported in this browser. Try Chrome 113+ or Edge 113+.';
-        } else {
-          errorDiv.textContent = `Failed to generate keys: ${err.message || 'Unknown error'}`;
-        }
-        errorDiv.classList.add('show');
+        showError(
+          ui.algorithm.value === 'ED25519'
+            ? 'ED25519 is not supported in this browser.'
+            : `Failed to generate keys: ${err.message || 'Unknown error'}`
+        );
       } finally {
-        generateBtn.disabled = false;
-        btnContent.textContent = 'Generate Key Pair';
+        setLoading(false);
       }
     }
 
-    generateBtn.addEventListener('click', generateKeys);
+    /* =========================================================
+     * EVENTS
+     * ======================================================= */
+    ui.algorithm.addEventListener('change', updateKeySizeOptions);
+    ui.generateBtn.addEventListener('click', generateKeys);
+    updateKeySizeOptions();
   </script>
 </body>
 </html>
