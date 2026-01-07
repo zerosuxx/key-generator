@@ -1,26 +1,819 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Key Generator - Cryptographic Toolkit</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    :root {
+      --background: hsl(222 47% 6%);
+      --foreground: hsl(210 40% 98%);
+      --card: hsl(222 47% 8%);
+      --primary: hsl(190 95% 50%);
+      --primary-foreground: hsl(222 47% 6%);
+      --accent: hsl(280 90% 60%);
+      --muted: hsl(222 47% 15%);
+      --muted-foreground: hsl(215 20% 55%);
+      --border: hsl(222 47% 18%);
+      --input: hsl(222 47% 12%);
+      --destructive: hsl(0 84% 60%);
+      --gradient-cyber: linear-gradient(135deg, hsl(190 95% 50%) 0%, hsl(280 90% 60%) 100%);
+    }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow-x: hidden;
+    }
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    .floating-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 24rem;
+      height: 24rem;
+      background: var(--primary);
+      top: -12rem;
+      left: -12rem;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 20rem;
+      height: 20rem;
+      background: var(--accent);
+      bottom: -10rem;
+      right: -10rem;
+      animation-delay: 2s;
+    }
+
+    .orb-3 {
+      width: 16rem;
+      height: 16rem;
+      background: var(--primary);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.05); }
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 2rem 2.5rem;
+      width: 100%;
+      max-width: 42rem;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.15),
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: var(--gradient-cyber);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.5;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    .badge-text {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--muted-foreground);
+      font-weight: 500;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(to right, var(--primary), var(--foreground), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted-foreground);
+      margin-top: 0.5rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    select {
+      background: var(--input);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2367e8f9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.25rem;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    select:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+      border-color: rgba(6, 182, 212, 0.5);
+    }
+
+    select option {
+      background: var(--card);
+      color: var(--foreground);
+    }
+
+    .disabled-select {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted-foreground);
+      cursor: not-allowed;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+    }
+
+    .checkbox-group:hover .checkbox-label {
+      color: var(--primary);
+    }
+
+    .checkbox-wrapper {
+      position: relative;
+    }
+
+    .checkbox-wrapper input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .checkbox-custom {
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid var(--border);
+      border-radius: 0.25rem;
+      background: var(--input);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-wrapper input:checked + .checkbox-custom {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .checkbox-custom svg {
+      width: 0.75rem;
+      height: 0.75rem;
+      stroke: var(--primary-foreground);
+      stroke-width: 3;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .checkbox-wrapper input:checked + .checkbox-custom svg {
+      opacity: 1;
+    }
+
+    .checkbox-label {
+      font-size: 0.875rem;
+      color: var(--foreground);
+      transition: color 0.2s ease;
+    }
+
+    .btn {
+      position: relative;
+      width: 100%;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary-foreground);
+      background: var(--gradient-cyber);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px -5px rgba(6, 182, 212, 0.7);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .spinner {
+      width: 1.25rem;
+      height: 1.25rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--destructive);
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .output-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .output-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .output-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+    }
+
+    .output-dot.green { background: #22c55e; }
+    .output-dot.red { background: #ef4444; }
+
+    textarea {
+      background: rgba(17, 24, 39, 0.5);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      width: 100%;
+      height: 8rem;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.875rem;
+      resize: none;
+    }
+
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.3);
+    }
+
+    textarea::placeholder {
+      color: var(--muted-foreground);
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--muted-foreground);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--muted);
+      color: var(--foreground);
+      border-color: var(--primary);
+    }
+
+    .copy-btn.copied {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .copy-btn svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .footer p {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .footer code {
+      color: rgba(6, 182, 212, 0.8);
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 1.5rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-orb orb-1"></div>
+  <div class="floating-orb orb-2"></div>
+  <div class="floating-orb orb-3"></div>
+
+  <div class="card">
+    <div class="header">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        <span class="badge-text">Cryptographic Toolkit</span>
+      </div>
+      <h1>Key Generator</h1>
+      <p class="subtitle">Generate secure cryptographic key pairs using Web Crypto API</p>
+    </div>
+
+    <div class="controls">
+      <div class="form-group">
+        <label for="algorithm">Algorithm</label>
+        <select id="algorithm">
+          <option value="ECDSA">ECDSA (Elliptic Curve)</option>
+          <option value="ED25519">ED25519 (Edwards Curve)</option>
+          <option value="RSA">RSA</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="keySize">Key Size</label>
+        <div id="keySizeContainer">
+          <select id="ecdsaSize">
+            <option value="256">256-bit (P-256 / secp256r1)</option>
+            <option value="384">384-bit (P-384 / secp384r1)</option>
+            <option value="521">521-bit (P-521 / secp521r1)</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="checkbox-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="sshFormat">
+          <div class="checkbox-custom">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+        <span class="checkbox-label">Generate SSH format public key</span>
+      </label>
+
+      <button class="btn" id="generateBtn">
+        <span class="btn-content" id="btnContent">Generate Key Pair</span>
+      </button>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="output-group">
+      <div class="form-group">
+        <div class="output-header">
+          <label class="output-label">
+            <span class="output-dot green"></span>
+            Public Key
+          </label>
+          <div class="btn-group">
+            <button class="copy-btn" id="copyPublicBtn" onclick="copyToClipboard('publicKey', 'copyPublicBtn')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <span>Copy</span>
+            </button>
+            <button class="copy-btn" id="downloadPublicBtn" onclick="downloadKey('publicKey', 'public')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              <span>Download</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="publicKey" readonly placeholder="Public key will appear here..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <div class="output-header">
+          <label class="output-label">
+            <span class="output-dot red"></span>
+            Private Key
+          </label>
+          <div class="btn-group">
+            <button class="copy-btn" id="copyPrivateBtn" onclick="copyToClipboard('privateKey', 'copyPrivateBtn')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <span>Copy</span>
+            </button>
+            <button class="copy-btn" id="downloadPrivateBtn" onclick="downloadKey('privateKey', 'private')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              <span>Download</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="privateKey" readonly placeholder="Private key will appear here..."></textarea>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Keys are generated locally in your browser using <code>crypto.subtle</code></p>
+    </div>
+  </div>
+
+  <script>
+    const algorithmSelect = document.getElementById('algorithm');
+    const keySizeContainer = document.getElementById('keySizeContainer');
+    const sshFormatCheckbox = document.getElementById('sshFormat');
+    const generateBtn = document.getElementById('generateBtn');
+    const btnContent = document.getElementById('btnContent');
+    const errorDiv = document.getElementById('error');
+    const publicKeyTextarea = document.getElementById('publicKey');
+    const privateKeyTextarea = document.getElementById('privateKey');
+
+    const ecdsaCurveMap = { '256': 'P-256', '384': 'P-384', '521': 'P-521' };
+    const sshCurveNames = { '256': 'nistp256', '384': 'nistp384', '521': 'nistp521' };
+
+    function copyToClipboard(textareaId, btnId) {
+      const textarea = document.getElementById(textareaId);
+      const btn = document.getElementById(btnId);
+      const text = textarea.value;
+      
+      if (!text) return;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        btn.querySelector('span').textContent = 'Copied!';
+        
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.querySelector('span').textContent = 'Copy';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+      });
+    }
+
+    function downloadKey(textareaId, type) {
+      const textarea = document.getElementById(textareaId);
+      const text = textarea.value;
+      
+      if (!text) return;
+      
+      const isSSH = sshFormatCheckbox.checked && type === 'public';
+      const algo = algorithmSelect.value.toLowerCase();
+      let filename;
+      
+      if (type === 'public') {
+        filename = isSSH ? `id_${algo}.pub` : `${algo}_public.pem`;
+      } else {
+        filename = `${algo}_private.pem`;
+      }
+      
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function updateKeySizeOptions() {
+      const algo = algorithmSelect.value;
+      if (algo === 'ED25519') {
+        keySizeContainer.innerHTML = '<div class="disabled-select">256-bit (Fixed)</div>';
+      } else if (algo === 'ECDSA') {
+        keySizeContainer.innerHTML = `
+          <select id="ecdsaSize">
+            <option value="256">256-bit (P-256 / secp256r1)</option>
+            <option value="384">384-bit (P-384 / secp384r1)</option>
+            <option value="521">521-bit (P-521 / secp521r1)</option>
+          </select>
+        `;
+      } else {
+        keySizeContainer.innerHTML = `
+          <select id="rsaSize">
+            <option value="1024">1024-bit</option>
+            <option value="2048" selected>2048-bit (Recommended)</option>
+            <option value="4096">4096-bit</option>
+          </select>
+        `;
+      }
+    }
+
+    algorithmSelect.addEventListener('change', updateKeySizeOptions);
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function formatPEM(base64, type) {
+      const lines = base64.match(/.{1,64}/g) || [];
+      return `-----BEGIN ${type} KEY-----\n${lines.join('\n')}\n-----END ${type} KEY-----`;
+    }
+
+    function encodeSSHString(str) {
+      const encoder = new TextEncoder();
+      const strBytes = encoder.encode(str);
+      const result = new Uint8Array(4 + strBytes.length);
+      const view = new DataView(result.buffer);
+      view.setUint32(0, strBytes.length, false);
+      result.set(strBytes, 4);
+      return result;
+    }
+
+    function encodeSSHBytes(bytes) {
+      const result = new Uint8Array(4 + bytes.length);
+      const view = new DataView(result.buffer);
+      view.setUint32(0, bytes.length, false);
+      result.set(bytes, 4);
+      return result;
+    }
+
+    function encodeSSHMpint(bytes) {
+      if (bytes[0] & 0x80) {
+        const padded = new Uint8Array(bytes.length + 1);
+        padded[0] = 0;
+        padded.set(bytes, 1);
+        bytes = padded;
+      }
+      return encodeSSHBytes(bytes);
+    }
+
+    async function formatSSHPublicKey(publicKey, algo, curveSize) {
+      if (algo === 'RSA') {
+        const jwk = await crypto.subtle.exportKey('jwk', publicKey);
+        const e = new Uint8Array(atob(jwk.e.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
+        const n = new Uint8Array(atob(jwk.n.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
+        const keyType = encodeSSHString('ssh-rsa');
+        const eEncoded = encodeSSHMpint(e);
+        const nEncoded = encodeSSHMpint(n);
+        const blob = new Uint8Array(keyType.length + eEncoded.length + nEncoded.length);
+        blob.set(keyType, 0);
+        blob.set(eEncoded, keyType.length);
+        blob.set(nEncoded, keyType.length + eEncoded.length);
+        return `ssh-rsa ${arrayBufferToBase64(blob.buffer)}`;
+      } else if (algo === 'ECDSA') {
+        const jwk = await crypto.subtle.exportKey('jwk', publicKey);
+        const x = new Uint8Array(atob(jwk.x.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
+        const y = new Uint8Array(atob(jwk.y.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => c.charCodeAt(0)));
+        const curveName = sshCurveNames[curveSize];
+        const keyType = `ecdsa-sha2-${curveName}`;
+        const point = new Uint8Array(1 + x.length + y.length);
+        point[0] = 0x04;
+        point.set(x, 1);
+        point.set(y, 1 + x.length);
+        const keyTypeEncoded = encodeSSHString(keyType);
+        const curveEncoded = encodeSSHString(curveName);
+        const pointEncoded = encodeSSHBytes(point);
+        const blob = new Uint8Array(keyTypeEncoded.length + curveEncoded.length + pointEncoded.length);
+        blob.set(keyTypeEncoded, 0);
+        blob.set(curveEncoded, keyTypeEncoded.length);
+        blob.set(pointEncoded, keyTypeEncoded.length + curveEncoded.length);
+        return `${keyType} ${arrayBufferToBase64(blob.buffer)}`;
+      } else {
+        const raw = await crypto.subtle.exportKey('raw', publicKey);
+        const rawBytes = new Uint8Array(raw);
+        const keyType = encodeSSHString('ssh-ed25519');
+        const keyData = encodeSSHBytes(rawBytes);
+        const blob = new Uint8Array(keyType.length + keyData.length);
+        blob.set(keyType, 0);
+        blob.set(keyData, keyType.length);
+        return `ssh-ed25519 ${arrayBufferToBase64(blob.buffer)}`;
+      }
+    }
+
+    async function generateKeys() {
+      const algo = algorithmSelect.value;
+      const sshFormat = sshFormatCheckbox.checked;
+      
+      generateBtn.disabled = true;
+      btnContent.innerHTML = `
+        <svg class="spinner" viewBox="0 0 24 24" fill="none">
+          <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+        </svg>
+        Generating...
+      `;
+      errorDiv.classList.remove('show');
+      publicKeyTextarea.value = '';
+      privateKeyTextarea.value = '';
+
+      try {
+        let keyPair;
+        let ecdsaSize = '256';
+        let rsaSize = '2048';
+
+        const ecdsaSizeEl = document.getElementById('ecdsaSize');
+        const rsaSizeEl = document.getElementById('rsaSize');
+        if (ecdsaSizeEl) ecdsaSize = ecdsaSizeEl.value;
+        if (rsaSizeEl) rsaSize = rsaSizeEl.value;
+
+        if (algo === 'ECDSA') {
+          keyPair = await crypto.subtle.generateKey(
+            { name: 'ECDSA', namedCurve: ecdsaCurveMap[ecdsaSize] },
+            true,
+            ['sign', 'verify']
+          );
+        } else if (algo === 'ED25519') {
+          keyPair = await crypto.subtle.generateKey(
+            { name: 'Ed25519' },
+            true,
+            ['sign', 'verify']
+          );
+        } else {
+          keyPair = await crypto.subtle.generateKey(
+            {
+              name: 'RSA-OAEP',
+              modulusLength: parseInt(rsaSize),
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: 'SHA-256'
+            },
+            true,
+            ['encrypt', 'decrypt']
+          );
+        }
+
+        const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        const privateKeyBase64 = arrayBufferToBase64(privateKeyBuffer);
+        privateKeyTextarea.value = formatPEM(privateKeyBase64, 'PRIVATE');
+
+        if (sshFormat) {
+          const sshPublicKey = await formatSSHPublicKey(keyPair.publicKey, algo, ecdsaSize);
+          publicKeyTextarea.value = sshPublicKey;
+        } else {
+          const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+          const publicKeyBase64 = arrayBufferToBase64(publicKeyBuffer);
+          publicKeyTextarea.value = formatPEM(publicKeyBase64, 'PUBLIC');
+        }
+      } catch (err) {
+        console.error(err);
+        if (algo === 'ED25519') {
+          errorDiv.textContent = 'ED25519 is not supported in this browser. Try Chrome 113+ or Edge 113+.';
+        } else {
+          errorDiv.textContent = `Failed to generate keys: ${err.message || 'Unknown error'}`;
+        }
+        errorDiv.classList.add('show');
+      } finally {
+        generateBtn.disabled = false;
+        btnContent.textContent = 'Generate Key Pair';
+      }
+    }
+
+    generateBtn.addEventListener('click', generateKeys);
+  </script>
+</body>
 </html>
