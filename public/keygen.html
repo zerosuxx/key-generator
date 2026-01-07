@@ -578,6 +578,7 @@
       });
     }
 
+    function updateKeySizeOptions() {
       const algo = algorithmSelect.value;
       if (algo === 'ED25519') {
         keySizeContainer.innerHTML = '<div class="disabled-select">256-bit (Fixed)</div>';
