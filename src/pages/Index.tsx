@@ -10,10 +10,17 @@ const ecdsaCurveMap: Record<ECDSASize, string> = {
   "521": "P-521",
 };
 
+const sshCurveNames: Record<ECDSASize, string> = {
+  "256": "nistp256",
+  "384": "nistp384",
+  "521": "nistp521",
+};
+
 const Index = () => {
   const [algorithm, setAlgorithm] = useState<Algorithm>("ECDSA");
   const [ecdsaSize, setEcdsaSize] = useState<ECDSASize>("256");
   const [rsaSize, setRsaSize] = useState<RSASize>("2048");
+  const [sshFormat, setSshFormat] = useState(false);
   const [publicKey, setPublicKey] = useState("");
   const [privateKey, setPrivateKey] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -31,6 +38,114 @@ const Index = () => {
   const formatPEM = (base64: string, type: "PUBLIC" | "PRIVATE"): string => {
     const lines = base64.match(/.{1,64}/g) || [];
     return `-----BEGIN ${type} KEY-----\n${lines.join("\n")}\n-----END ${type} KEY-----`;
+  };
+
+  // Helper to encode a string as SSH wire format (length-prefixed)
+  const encodeSSHString = (str: string): Uint8Array => {
+    const encoder = new TextEncoder();
+    const strBytes = encoder.encode(str);
+    const result = new Uint8Array(4 + strBytes.length);
+    const view = new DataView(result.buffer);
+    view.setUint32(0, strBytes.length, false);
+    result.set(strBytes, 4);
+    return result;
+  };
+
+  // Helper to encode bytes as SSH wire format (length-prefixed)
+  const encodeSSHBytes = (bytes: Uint8Array): Uint8Array => {
+    const result = new Uint8Array(4 + bytes.length);
+    const view = new DataView(result.buffer);
+    view.setUint32(0, bytes.length, false);
+    result.set(bytes, 4);
+    return result;
+  };
+
+  // Helper to encode a BigInt as SSH mpint
+  const encodeSSHMpint = (bytes: Uint8Array): Uint8Array => {
+    // Add leading zero if high bit is set (to indicate positive number)
+    if (bytes[0] & 0x80) {
+      const padded = new Uint8Array(bytes.length + 1);
+      padded[0] = 0;
+      padded.set(bytes, 1);
+      bytes = padded;
+    }
+    return encodeSSHBytes(bytes);
+  };
+
+  const formatSSHPublicKey = async (
+    publicKey: CryptoKey,
+    algo: Algorithm,
+    curveSize: ECDSASize
+  ): Promise<string> => {
+    if (algo === "RSA") {
+      const jwk = await crypto.subtle.exportKey("jwk", publicKey);
+      const e = new Uint8Array(
+        atob(jwk.e!.replace(/-/g, "+").replace(/_/g, "/"))
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+      const n = new Uint8Array(
+        atob(jwk.n!.replace(/-/g, "+").replace(/_/g, "/"))
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+
+      const keyType = encodeSSHString("ssh-rsa");
+      const eEncoded = encodeSSHMpint(e);
+      const nEncoded = encodeSSHMpint(n);
+
+      const blob = new Uint8Array(keyType.length + eEncoded.length + nEncoded.length);
+      blob.set(keyType, 0);
+      blob.set(eEncoded, keyType.length);
+      blob.set(nEncoded, keyType.length + eEncoded.length);
+
+      return `ssh-rsa ${arrayBufferToBase64(blob.buffer)}`;
+    } else if (algo === "ECDSA") {
+      const jwk = await crypto.subtle.exportKey("jwk", publicKey);
+      const x = new Uint8Array(
+        atob(jwk.x!.replace(/-/g, "+").replace(/_/g, "/"))
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+      const y = new Uint8Array(
+        atob(jwk.y!.replace(/-/g, "+").replace(/_/g, "/"))
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+
+      const curveName = sshCurveNames[curveSize];
+      const keyType = `ecdsa-sha2-${curveName}`;
+      
+      // Uncompressed point format: 0x04 || x || y
+      const point = new Uint8Array(1 + x.length + y.length);
+      point[0] = 0x04;
+      point.set(x, 1);
+      point.set(y, 1 + x.length);
+
+      const keyTypeEncoded = encodeSSHString(keyType);
+      const curveEncoded = encodeSSHString(curveName);
+      const pointEncoded = encodeSSHBytes(point);
+
+      const blob = new Uint8Array(keyTypeEncoded.length + curveEncoded.length + pointEncoded.length);
+      blob.set(keyTypeEncoded, 0);
+      blob.set(curveEncoded, keyTypeEncoded.length);
+      blob.set(pointEncoded, keyTypeEncoded.length + curveEncoded.length);
+
+      return `${keyType} ${arrayBufferToBase64(blob.buffer)}`;
+    } else {
+      // ED25519
+      const raw = await crypto.subtle.exportKey("raw", publicKey);
+      const rawBytes = new Uint8Array(raw);
+      
+      const keyType = encodeSSHString("ssh-ed25519");
+      const keyData = encodeSSHBytes(rawBytes);
+
+      const blob = new Uint8Array(keyType.length + keyData.length);
+      blob.set(keyType, 0);
+      blob.set(keyData, keyType.length);
+
+      return `ssh-ed25519 ${arrayBufferToBase64(blob.buffer)}`;
+    }
   };
 
   const generateKeys = useCallback(async () => {
@@ -67,14 +182,20 @@ const Index = () => {
         );
       }
 
-      const publicKeyBuffer = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+      // Export private key (always PEM format)
       const privateKeyBuffer = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-
-      const publicKeyBase64 = arrayBufferToBase64(publicKeyBuffer);
       const privateKeyBase64 = arrayBufferToBase64(privateKeyBuffer);
-
-      setPublicKey(formatPEM(publicKeyBase64, "PUBLIC"));
       setPrivateKey(formatPEM(privateKeyBase64, "PRIVATE"));
+
+      // Export public key
+      if (sshFormat) {
+        const sshPublicKey = await formatSSHPublicKey(keyPair.publicKey, algorithm, ecdsaSize);
+        setPublicKey(sshPublicKey);
+      } else {
+        const publicKeyBuffer = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+        const publicKeyBase64 = arrayBufferToBase64(publicKeyBuffer);
+        setPublicKey(formatPEM(publicKeyBase64, "PUBLIC"));
+      }
     } catch (err) {
       console.error(err);
       if (algorithm === "ED25519") {
@@ -85,7 +206,7 @@ const Index = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [algorithm, ecdsaSize, rsaSize]);
+  }, [algorithm, ecdsaSize, rsaSize, sshFormat]);
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
@@ -164,8 +285,30 @@ const Index = () => {
                 <option value="2048">2048-bit (Recommended)</option>
                 <option value="4096">4096-bit</option>
               </select>
-            )}
+          )}
           </div>
+
+          {/* SSH Format checkbox */}
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={sshFormat}
+                onChange={(e) => setSshFormat(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-5 h-5 border-2 border-border rounded bg-input peer-checked:bg-primary peer-checked:border-primary transition-all duration-200 flex items-center justify-center">
+                {sshFormat && (
+                  <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+              Generate SSH format public key
+            </span>
+          </label>
 
           {/* Generate button */}
           <button
