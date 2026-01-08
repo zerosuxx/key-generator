@@ -447,12 +447,110 @@
       color: rgba(6, 182, 212, 0.8);
     }
 
-    @media (max-width: 640px) {
-      .card {
-        padding: 1.5rem;
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+        align-items: flex-start;
+        padding-top: 1rem;
       }
+
+      .floating-orb {
+        display: none;
+      }
+
+      .card {
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        max-width: 100%;
+      }
+
+      .header {
+        margin-bottom: 1.5rem;
+      }
+
       h1 {
         font-size: 1.5rem;
+      }
+
+      .subtitle {
+        font-size: 0.875rem;
+      }
+
+      .badge-text {
+        font-size: 0.625rem;
+        letter-spacing: 0.2em;
+      }
+
+      .controls {
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        font-size: 0.75rem;
+      }
+
+      select, .disabled-select {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+      }
+
+      .btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.875rem;
+      }
+
+      textarea {
+        height: 6rem;
+        font-size: 0.75rem;
+        padding: 0.75rem;
+      }
+
+      .output-group {
+        gap: 1rem;
+      }
+
+      .output-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .btn-group {
+        width: 100%;
+      }
+
+      .copy-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.5rem 0.625rem;
+      }
+
+      .footer {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+      }
+
+      .footer p {
+        font-size: 0.625rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .card {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .copy-btn {
+        width: 100%;
       }
     }
   </style>
