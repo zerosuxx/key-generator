@@ -635,13 +635,13 @@
             Public Key
           </label>
           <div class="btn-group">
-            <button class="copy-btn" id="copyPublicBtn" onclick="copyToClipboard('publicKey', 'copyPublicBtn')">
+            <button class="copy-btn" id="copyPublicBtn">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span>Copy</span>
             </button>
-            <button class="copy-btn" id="downloadPublicBtn" onclick="downloadKey('publicKey', 'public')">
+            <button class="copy-btn" id="downloadPublicBtn">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -659,13 +659,13 @@
             Private Key
           </label>
           <div class="btn-group">
-            <button class="copy-btn" id="copyPrivateBtn" onclick="copyToClipboard('privateKey', 'copyPrivateBtn')">
+            <button class="copy-btn" id="copyPrivateBtn">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span>Copy</span>
             </button>
-            <button class="copy-btn" id="downloadPrivateBtn" onclick="downloadKey('privateKey', 'private')">
+            <button class="copy-btn" id="downloadPrivateBtn">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -702,6 +702,10 @@
       error: $('error'),
       publicKey: $('publicKey'),
       privateKey: $('privateKey'),
+      copyPublicBtn: $('copyPublicBtn'),
+      copyPrivateBtn: $('copyPrivateBtn'),
+      downloadPublicBtn: $('downloadPublicBtn'),
+      downloadPrivateBtn: $('downloadPrivateBtn'),
     };
 
     /* =========================================================
@@ -1042,12 +1046,11 @@
      * ======================================================= */
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
     ui.generateBtn.addEventListener('click', generateKeys);
+    ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('publicKey', 'copyPublicBtn'));
+    ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('privateKey', 'copyPrivateBtn'));
+    ui.downloadPublicBtn.addEventListener('click', () => downloadKey('publicKey', 'public'));
+    ui.downloadPrivateBtn.addEventListener('click', () => downloadKey('privateKey', 'private'));
     updateKeySizeOptions();
-    
-
-
-    //alert(formatPEM(bufferToBase64(spkiFromPublicKeyED25519(publicKey)), 'PUBLIC KEY'));
-    //alert(formatPEM(bufferToBase64(pkcs8FromPrivateKeyED25519(privateKey)), 'PRIVATE KEY'));
   </script>
 </body>
 </html>
