@@ -909,11 +909,101 @@
     }
 
     /* =========================================================
+     * COPY TO CLIPBOARD
+     * ======================================================= */
+    async function copyToClipboard(textareaId, buttonId) {
+      const textarea = document.getElementById(textareaId);
+      const button = document.getElementById(buttonId);
+      const text = textarea.value;
+      
+      if (!text) return;
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        button.classList.add('copied');
+        button.querySelector('span').textContent = 'Copied!';
+        
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.querySelector('span').textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        // Fallback for older browsers
+        textarea.select();
+        document.execCommand('copy');
+        button.classList.add('copied');
+        button.querySelector('span').textContent = 'Copied!';
+        
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.querySelector('span').textContent = 'Copy';
+        }, 2000);
+      }
+    }
+
+    /* =========================================================
+     * DOWNLOAD KEY
+     * ======================================================= */
+    function downloadKey(textareaId, type) {
+      const textarea = document.getElementById(textareaId);
+      const text = textarea.value;
+      
+      if (!text) return;
+      
+      const algo = ui.algorithm.value.toLowerCase();
+      const isSSH = ui.sshFormat.checked && type === 'public';
+      
+      let filename;
+      if (isSSH) {
+        filename = `id_${algo}.pub`;
+      } else {
+        filename = `${algo}_${type}.pem`;
+      }
+      
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /* =========================================================
+     * ED25519 BROWSER SUPPORT CHECK
+     * ======================================================= */
+    async function checkEd25519Support() {
+      try {
+        await crypto.subtle.generateKey(
+          { name: 'Ed25519' },
+          false,
+          ['sign', 'verify']
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function updateEd25519Option() {
+      const supported = await checkEd25519Support();
+      const ed25519Option = ui.algorithm.querySelector('option[value="ED25519"]');
+      
+      if (!supported && ed25519Option) {
+        ed25519Option.disabled = true;
+        ed25519Option.textContent = 'ED25519 (Not supported in this browser)';
+      }
+    }
+
+    /* =========================================================
      * EVENTS
      * ======================================================= */
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
     ui.generateBtn.addEventListener('click', generateKeys);
     updateKeySizeOptions();
+    updateEd25519Option();
   </script>
 </body>
 </html>
