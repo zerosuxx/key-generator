@@ -725,7 +725,7 @@
     
     const KEY_LABELS = {
       ECDSA: 'EC',
-      ED25519: 'OPENSSH',
+      ED25519: '',
       RSA: 'RSA',
     };
 
@@ -954,7 +954,7 @@
         const keyPair = await generateKeyPair();
 
         const privateKey = algo === 'ED25519' && keyPair.privateKey instanceof Uint8Array ? pkcs8FromPrivateKeyED25519(keyPair.privateKey) : await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[algo]} PRIVATE`);
+        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[algo]} PRIVATE`.trim());
 
         if (ui.sshFormat.checked) {
           ui.publicKey.value = await formatSSHPublicKey(
