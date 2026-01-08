@@ -1047,7 +1047,7 @@
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
     ui.generateBtn.addEventListener('click', generateKeys);
     ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('publicKey', 'copyPublicBtn'));
-    ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('privateKey', 'copyPrivateBtn'));
+    ui.copyPrivateBtn.addEventListener('click', () => copyToClipboard('privateKey', 'copyPrivateBtn'));
     ui.downloadPublicBtn.addEventListener('click', () => downloadKey('publicKey', 'public'));
     ui.downloadPrivateBtn.addEventListener('click', () => downloadKey('privateKey', 'private'));
     updateKeySizeOptions();
