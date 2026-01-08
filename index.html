@@ -12,7 +12,7 @@
       box-sizing: border-box;
     }
 
-    :root {
+:root {
       --background: hsl(222 47% 6%);
       --foreground: hsl(210 40% 98%);
       --card: hsl(222 47% 8%);
@@ -78,8 +78,12 @@
     }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.05); }
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-20px) scale(1.05);
+      }
     }
 
     .card {
@@ -93,7 +97,7 @@
       position: relative;
       z-index: 10;
       box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.15),
-                  inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
     }
 
     .card::before {
@@ -137,8 +141,12 @@
     }
 
     @keyframes pulse-glow {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 0.8; }
+      0%, 100% {
+        opacity: 0.5;
+      }
+      50% {
+        opacity: 0.8;
+      }
     }
 
     .badge-text {
@@ -326,8 +334,12 @@
     }
 
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .error {
@@ -363,8 +375,12 @@
       border-radius: 50%;
     }
 
-    .output-dot.green { background: #22c55e; }
-    .output-dot.red { background: #ef4444; }
+    .output-dot.green {
+      background: #22c55e;
+    }
+    .output-dot.red {
+      background: #ef4444;
+    }
 
     textarea {
       background: rgba(17, 24, 39, 0.5);
@@ -559,7 +575,6 @@
   <div class="floating-orb orb-1"></div>
   <div class="floating-orb orb-2"></div>
   <div class="floating-orb orb-3"></div>
-
   <div class="card">
     <div class="header">
       <div class="badge">
@@ -567,7 +582,9 @@
         <span class="badge-text">Cryptographic Toolkit</span>
       </div>
       <h1>Key Generator</h1>
-      <p class="subtitle">Generate secure cryptographic key pairs using Web Crypto API</p>
+      <p class="subtitle">
+        Generate secure cryptographic key pairs using Web Crypto API
+      </p>
     </div>
 
     <div class="controls">
@@ -596,7 +613,7 @@
           <input type="checkbox" id="sshFormat">
           <div class="checkbox-custom">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
         </div>
@@ -620,13 +637,13 @@
           <div class="btn-group">
             <button class="copy-btn" id="copyPublicBtn" onclick="copyToClipboard('publicKey', 'copyPublicBtn')">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span>Copy</span>
             </button>
             <button class="copy-btn" id="downloadPublicBtn" onclick="downloadKey('publicKey', 'public')">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               <span>Download</span>
             </button>
@@ -644,13 +661,13 @@
           <div class="btn-group">
             <button class="copy-btn" id="copyPrivateBtn" onclick="copyToClipboard('privateKey', 'copyPrivateBtn')">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span>Copy</span>
             </button>
             <button class="copy-btn" id="downloadPrivateBtn" onclick="downloadKey('privateKey', 'private')">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               <span>Download</span>
             </button>
@@ -661,11 +678,16 @@
     </div>
 
     <div class="footer">
-      <p>Keys are generated locally in your browser using <code>crypto.subtle</code></p>
+      <p>
+        Keys are generated locally in your browser using <code>crypto.subtle</code>
+      </p>
     </div>
   </div>
+  <script type="module">
+    import {
+      ed25519
+    } from "https://esm.sh/@noble/curves@2.0.1/ed25519";
 
-  <script>
     /* =========================================================
      * DOM REFERENCES
      * ======================================================= */
@@ -696,6 +718,12 @@
       '384': 'nistp384',
       '521': 'nistp521',
     };
+    
+    const KEY_LABELS = {
+      ECDSA: 'EC',
+      ED25519: 'OPENSSH',
+      RSA: 'RSA',
+    };
 
     /* =========================================================
      * UI HELPERS
@@ -703,15 +731,14 @@
     function setLoading(isLoading) {
       ui.generateBtn.disabled = isLoading;
       ui.btnContent.innerHTML = isLoading
-        ? `
+      ? `
       <svg class="spinner" viewBox="0 0 24 24" fill="none">
-        <circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path style="opacity:.75" fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      <circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path style="opacity:.75" fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
       </svg>
       Generating...
-    `
-        : 'Generate Key Pair';
+      `: 'Generate Key Pair';
     }
 
     function showError(message) {
@@ -733,43 +760,65 @@
 
       if (algo === 'ED25519') {
         ui.keySizeContainer.innerHTML =
-          `<div class="disabled-select">256-bit (Fixed)</div>`;
+        `<div class="disabled-select">256-bit (Fixed)</div>`;
         return;
       }
 
       if (algo === 'ECDSA') {
         ui.keySizeContainer.innerHTML = `
-      <select id="ecdsaSize">
+        <select id="ecdsaSize">
         <option value="256">256-bit (P-256)</option>
         <option value="384">384-bit (P-384)</option>
         <option value="521">521-bit (P-521)</option>
-      </select>
-    `;
+        </select>
+        `;
         return;
       }
 
       ui.keySizeContainer.innerHTML = `
-    <select id="rsaSize">
+      <select id="rsaSize">
       <option value="1024">1024-bit</option>
       <option value="2048" selected>2048-bit (Recommended)</option>
       <option value="4096">4096-bit</option>
-    </select>
-  `;
+      </select>
+      `;
     }
 
     /* =========================================================
      * UTILS
      * ======================================================= */
     const bufferToBase64 = (buffer) =>
-      btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
     const formatPEM = (base64, type) =>
-      `-----BEGIN ${type} KEY-----\n${
-        base64.match(/.{1,64}/g).join('\n')
-      }\n-----END ${type} KEY-----`;
+    `-----BEGIN ${type} KEY-----\n${
+    base64.match(/.{1,64}/g).join('\n')
+    }\n-----END ${type} KEY-----`;
 
     const decodeBase64Url = (str) =>
-      Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+
+    const spkiFromPublicKeyED25519 = (pub) => {
+      return new Uint8Array([
+        0x30, 0x2a,
+        0x30, 0x05,
+        0x06, 0x03, 0x2b, 0x65, 0x70,
+        0x03, 0x21, 0x00,
+        ...pub
+      ]);
+    }
+
+    const pkcs8FromPrivateKeyED25519 = (priv) => {
+      return new Uint8Array([
+        0x30, 0x2e,
+        0x02, 0x01, 0x00,
+        0x30, 0x05,
+        0x06, 0x03, 0x2b, 0x65, 0x70,
+        0x04, 0x22,
+        0x04, 0x20,
+        ...priv
+      ]);
+    }
 
     /* =========================================================
      * SSH ENCODING
@@ -829,7 +878,7 @@
         return `ecdsa-sha2-${curve} ${bufferToBase64(blob)}`;
       }
 
-      const raw = new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
+      const raw = publicKey instanceof Uint8Array ? publicKey : new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
       const blob = new Uint8Array([
         ...ssh.string('ssh-ed25519'),
         ...ssh.bytes(raw),
@@ -840,6 +889,24 @@
     /* =========================================================
      * KEY GENERATION
      * ======================================================= */
+    async function generateED25519() {
+      try {
+        return await crypto.subtle.generateKey(
+          {
+            name: 'Ed25519'
+          },
+          true,
+          ['sign', 'verify']
+        );
+      } catch (err) {
+        const privateKey = ed25519.utils.randomSecretKey();
+        return {
+          privateKey,
+          publicKey: ed25519.getPublicKey(privateKey),
+        };
+      }
+    }
+
     async function generateKeyPair() {
       const algo = ui.algorithm.value;
       const ecdsaSize = $('ecdsaSize')?.value ?? '256';
@@ -847,18 +914,16 @@
 
       if (algo === 'ECDSA') {
         return crypto.subtle.generateKey(
-          { name: 'ECDSA', namedCurve: ECDSA_CURVES[ecdsaSize] },
+          {
+            name: 'ECDSA', namedCurve: ECDSA_CURVES[ecdsaSize]
+          },
           true,
           ['sign', 'verify']
         );
       }
 
       if (algo === 'ED25519') {
-        return crypto.subtle.generateKey(
-          { name: 'Ed25519' },
-          true,
-          ['sign', 'verify']
-        );
+        return generateED25519();
       }
 
       return crypto.subtle.generateKey(
@@ -881,10 +946,11 @@
         clearOutput();
         setLoading(true);
 
+        const algo = ui.algorithm.value;
         const keyPair = await generateKeyPair();
 
-        const privateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), 'PRIVATE');
+        const privateKey = algo === 'ED25519' && keyPair.privateKey instanceof Uint8Array ? pkcs8FromPrivateKeyED25519(keyPair.privateKey) : await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[algo]} PRIVATE`);
 
         if (ui.sshFormat.checked) {
           ui.publicKey.value = await formatSSHPublicKey(
@@ -893,15 +959,13 @@
             $('ecdsaSize')?.value
           );
         } else {
-          const publicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+          const publicKey = algo === 'ED25519' && keyPair.publicKey instanceof Uint8Array ? spkiFromPublicKeyED25519(keyPair.publicKey) : await crypto.subtle.exportKey('spki', keyPair.publicKey);
           ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
         }
       } catch (err) {
         console.error(err);
         showError(
-          ui.algorithm.value === 'ED25519'
-            ? 'ED25519 is not supported in this browser.'
-            : `Failed to generate keys: ${err.message || 'Unknown error'}`
+          `Failed to generate keys: ${err.message || 'Unknown error'}`
         );
       } finally {
         setLoading(false);
@@ -915,14 +979,14 @@
       const textarea = document.getElementById(textareaId);
       const button = document.getElementById(buttonId);
       const text = textarea.value;
-      
+
       if (!text) return;
-      
+
       try {
         await navigator.clipboard.writeText(text);
         button.classList.add('copied');
         button.querySelector('span').textContent = 'Copied!';
-        
+
         setTimeout(() => {
           button.classList.remove('copied');
           button.querySelector('span').textContent = 'Copy';
@@ -933,7 +997,7 @@
         document.execCommand('copy');
         button.classList.add('copied');
         button.querySelector('span').textContent = 'Copied!';
-        
+
         setTimeout(() => {
           button.classList.remove('copied');
           button.querySelector('span').textContent = 'Copy';
@@ -947,20 +1011,22 @@
     function downloadKey(textareaId, type) {
       const textarea = document.getElementById(textareaId);
       const text = textarea.value;
-      
+
       if (!text) return;
-      
+
       const algo = ui.algorithm.value.toLowerCase();
       const isSSH = ui.sshFormat.checked && type === 'public';
-      
+
       let filename;
       if (isSSH) {
         filename = `id_${algo}.pub`;
       } else {
         filename = `${algo}_${type}.pem`;
       }
-      
-      const blob = new Blob([text], { type: 'text/plain' });
+
+      const blob = new Blob([text], {
+        type: 'text/plain'
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -972,38 +1038,16 @@
     }
 
     /* =========================================================
-     * ED25519 BROWSER SUPPORT CHECK
-     * ======================================================= */
-    async function checkEd25519Support() {
-      try {
-        await crypto.subtle.generateKey(
-          { name: 'Ed25519' },
-          false,
-          ['sign', 'verify']
-        );
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    async function updateEd25519Option() {
-      const supported = await checkEd25519Support();
-      const ed25519Option = ui.algorithm.querySelector('option[value="ED25519"]');
-      
-      if (!supported && ed25519Option) {
-        ed25519Option.disabled = true;
-        ed25519Option.textContent = 'ED25519 (Not supported in this browser)';
-      }
-    }
-
-    /* =========================================================
      * EVENTS
      * ======================================================= */
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
     ui.generateBtn.addEventListener('click', generateKeys);
     updateKeySizeOptions();
-    updateEd25519Option();
+    
+
+
+    //alert(formatPEM(bufferToBase64(spkiFromPublicKeyED25519(publicKey)), 'PUBLIC KEY'));
+    //alert(formatPEM(bufferToBase64(pkcs8FromPrivateKeyED25519(privateKey)), 'PRIVATE KEY'));
   </script>
 </body>
 </html>
