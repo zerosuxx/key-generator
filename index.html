@@ -817,7 +817,7 @@
         0x03, 0x21, 0x00,
         ...pub
       ]);
-    }
+    };
 
     const pkcs8FromPrivateKeyED25519 = (priv) => {
       return new Uint8Array([
@@ -829,7 +829,11 @@
         0x04, 0x20,
         ...priv
       ]);
-    }
+    };
+
+    const isED25519Key = (key, algo) => {
+      return algo === 'ED25519' && key instanceof Uint8Array;
+    };
 
     /* =========================================================
      * SSH ENCODING
@@ -852,7 +856,9 @@
       },
 
       mpint: (bytes) => {
-        if (bytes[0] & 0x80) bytes = Uint8Array.from([0, ...bytes]);
+        if (bytes[0] & 0x80) {
+          bytes = Uint8Array.from([0, ...bytes]);
+        }
         return ssh.bytes(bytes);
       },
     };
@@ -889,7 +895,7 @@
         return `ecdsa-sha2-${curve} ${bufferToBase64(blob)}`;
       }
 
-      const raw = publicKey instanceof Uint8Array ? publicKey : new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
+      const raw = isED25519Key(publicKey, algo) ? publicKey : new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
       const blob = new Uint8Array([
         ...ssh.string('ssh-ed25519'),
         ...ssh.bytes(raw),
@@ -960,7 +966,7 @@
         const algo = ui.algorithm.value;
         const keyPair = await generateKeyPair();
 
-        const privateKey = algo === 'ED25519' && keyPair.privateKey instanceof Uint8Array ? pkcs8FromPrivateKeyED25519(keyPair.privateKey) : await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        const privateKey = isED25519Key(keyPair.privateKey, algo) ? pkcs8FromPrivateKeyED25519(keyPair.privateKey) : await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
         ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[algo]} PRIVATE`.trim());
 
         if (ui.sshFormat.checked) {
@@ -970,7 +976,7 @@
             $('ecdsaSize')?.value
           );
         } else {
-          const publicKey = algo === 'ED25519' && keyPair.publicKey instanceof Uint8Array ? spkiFromPublicKeyED25519(keyPair.publicKey) : await crypto.subtle.exportKey('spki', keyPair.publicKey);
+          const publicKey = isED25519Key(keyPair.publicKey, algo) ? spkiFromPublicKeyED25519(keyPair.publicKey) : await crypto.subtle.exportKey('spki', keyPair.publicKey);
           ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
         }
       } catch (err) {
@@ -991,7 +997,9 @@
       const button = document.getElementById(buttonId);
       const text = textarea.value;
 
-      if (!text) return;
+      if (!text) {
+        return;
+      }
 
       try {
         await navigator.clipboard.writeText(text);
@@ -1036,7 +1044,7 @@
       }
 
       const blob = new Blob([text], {
-        type: 'text/plain'
+        type: 'text/plain',
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
