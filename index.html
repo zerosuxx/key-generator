@@ -40,6 +40,14 @@
       overflow-x: hidden;
     }
 
+    .orb-layer {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .floating-orb {
       position: absolute;
       border-radius: 50%;
@@ -71,9 +79,8 @@
       width: 16rem;
       height: 16rem;
       background: var(--primary);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 40%;
+      left: 40%;
       animation-delay: 4s;
     }
 
@@ -572,9 +579,11 @@
   </style>
 </head>
 <body>
-  <div class="floating-orb orb-1"></div>
-  <div class="floating-orb orb-2"></div>
-  <div class="floating-orb orb-3"></div>
+  <div class="orb-layer">
+    <div class="floating-orb orb-1"></div>
+    <div class="floating-orb orb-2"></div>
+    <div class="floating-orb orb-3"></div>
+  </div>
   <div class="card">
     <div class="header">
       <div class="badge">
@@ -600,7 +609,9 @@
       <div class="form-group">
         <label for="keySizeContainer">Key Size</label>
         <div id="keySizeContainer">
-          <select></select>
+          <label>
+            <select><option>loading...</option></select>
+          </label>
         </div>
       </div>
 
@@ -718,7 +729,7 @@
       '384': 'nistp384',
       '521': 'nistp521',
     };
-    
+
     const KEY_LABELS = {
       ECDSA: 'EC',
       ED25519: '',
