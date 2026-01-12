@@ -615,18 +615,6 @@
         </div>
       </div>
 
-      <label class="checkbox-group">
-        <div class="checkbox-wrapper">
-          <input type="checkbox" id="sshFormat">
-          <div class="checkbox-custom">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-        <span class="checkbox-label">Generate SSH format public key</span>
-      </label>
-
       <button class="btn" id="generateBtn">
         <span class="btn-content" id="btnContent">Generate Key Pair</span>
       </button>
@@ -642,6 +630,17 @@
             Public Key
           </label>
           <div class="btn-group">
+            <label class="checkbox-group">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" id="sshFormat">
+                <div class="checkbox-custom">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span class="checkbox-label">SSH format</span>
+              </div>
+            </label>
             <button class="copy-btn" id="copyPublicBtn">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -694,6 +693,8 @@
     import {
       ed25519
     } from "https://esm.sh/@noble/curves@2.0.1/ed25519";
+
+    let state = { algo: null, keyPair: null, ecdsaSize: null, rsaSize: null };
 
     /* =========================================================
      * DOM REFERENCES
@@ -815,7 +816,7 @@
         0x30, 0x05,
         0x06, 0x03, 0x2b, 0x65, 0x70,
         0x03, 0x21, 0x00,
-        ...pub
+        ...pub,
       ]);
     };
 
@@ -827,7 +828,7 @@
         0x06, 0x03, 0x2b, 0x65, 0x70,
         0x04, 0x22,
         0x04, 0x20,
-        ...priv
+        ...priv,
       ]);
     };
 
@@ -924,15 +925,12 @@
       }
     }
 
-    async function generateKeyPair() {
-      const algo = ui.algorithm.value;
-      const ecdsaSize = $('ecdsaSize')?.value ?? '256';
-      const rsaSize = $('rsaSize')?.value ?? '2048';
-
+    async function generateKeyPair(algo, ecdsaSize, rsaSize) {
       if (algo === 'ECDSA') {
         return crypto.subtle.generateKey(
           {
-            name: 'ECDSA', namedCurve: ECDSA_CURVES[ecdsaSize]
+            name: 'ECDSA',
+            namedCurve: ECDSA_CURVES[ecdsaSize],
           },
           true,
           ['sign', 'verify']
@@ -956,34 +954,56 @@
     }
 
     /* =========================================================
-     * MAIN HANDLER
+     * MAIN HANDLERS
      * ======================================================= */
+    async function generatePrivateKey() {
+      if (state.keyPair == null || state.algo == null) {
+        return;
+      }
+
+      const privateKey = isED25519Key(state.keyPair.privateKey, state.algo)
+        ? pkcs8FromPrivateKeyED25519(state.keyPair.privateKey)
+        : await crypto.subtle.exportKey('pkcs8', state.keyPair.privateKey);
+      ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[state.algo]} PRIVATE`.trim());
+    }
+
+    async function generatePublicKey() {
+      if (state.keyPair == null || state.algo == null) {
+        return;
+      }
+
+      if (ui.sshFormat.checked) {
+        ui.publicKey.value = await formatSSHPublicKey(
+          state.keyPair.publicKey,
+          state.algo,
+          state.ecdsaSize,
+        );
+        return;
+      }
+
+      const publicKey = isED25519Key(state.keyPair.publicKey, state.algo) ? spkiFromPublicKeyED25519(state.keyPair.publicKey) : await crypto.subtle.exportKey('spki', state.keyPair.publicKey);
+      ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
+    }
+
     async function generateKeys() {
       try {
         clearOutput();
         setLoading(true);
 
         const algo = ui.algorithm.value;
-        const keyPair = await generateKeyPair();
+        const ecdsaSize = $('ecdsaSize')?.value ?? '256';
+        const rsaSize = $('rsaSize')?.value ?? '2048';
 
-        const privateKey = isED25519Key(keyPair.privateKey, algo) ? pkcs8FromPrivateKeyED25519(keyPair.privateKey) : await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-        ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[algo]} PRIVATE`.trim());
+        state.keyPair = await generateKeyPair(algo, ecdsaSize, rsaSize);
+        state.algo = algo;
+        state.ecdsaSize = ecdsaSize;
+        state.rsaSize = rsaSize;
 
-        if (ui.sshFormat.checked) {
-          ui.publicKey.value = await formatSSHPublicKey(
-            keyPair.publicKey,
-            ui.algorithm.value,
-            $('ecdsaSize')?.value
-          );
-        } else {
-          const publicKey = isED25519Key(keyPair.publicKey, algo) ? spkiFromPublicKeyED25519(keyPair.publicKey) : await crypto.subtle.exportKey('spki', keyPair.publicKey);
-          ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
-        }
+        await generatePrivateKey();
+        await generatePublicKey();
       } catch (err) {
         console.error(err);
-        showError(
-          `Failed to generate keys: ${err.message || 'Unknown error'}`
-        );
+        showError(`Failed to generate keys: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
@@ -1060,6 +1080,7 @@
      * EVENTS
      * ======================================================= */
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
+    ui.sshFormat.addEventListener('change', generatePublicKey);
     ui.generateBtn.addEventListener('click', generateKeys);
     ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('publicKey', 'copyPublicBtn'));
     ui.copyPrivateBtn.addEventListener('click', () => copyToClipboard('privateKey', 'copyPrivateBtn'));
