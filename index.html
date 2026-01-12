@@ -695,9 +695,7 @@
     </div>
   </div>
   <script type="module">
-    import {
-      ed25519
-    } from "https://esm.sh/@noble/curves@2.0.1/ed25519";
+    import { ed25519 } from 'https://esm.sh/@noble/curves@2.0.1/ed25519';
 
     let state = {
       algo: null,
@@ -809,16 +807,30 @@
     /* =========================================================
      * UTILS
      * ======================================================= */
-    const bufferToBase64 = (buffer) =>
-    btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const bufferToBase64 = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
     const formatPEM = (base64, type) =>
-    `-----BEGIN ${type} KEY-----\n${
-    base64.match(/.{1,64}/g).join('\n')
-    }\n-----END ${type} KEY-----`;
+      `-----BEGIN ${type} KEY-----\n${
+      base64.match(/.{1,64}/g).join('\n')
+      }\n-----END ${type} KEY-----`;
 
-    const decodeBase64Url = (str) =>
-    Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const decodeBase64Url = (str) => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+
+    const writeUint32Buffer = (n) => {
+      return new Uint8Array([
+        (n >>> 24) & 255,
+        (n >>> 16) & 255,
+        (n >>> 8) & 255,
+        n & 255
+      ]);
+    }
+
+    const writeStringBuffer = (bytes) => {
+      return new Uint8Array([
+        ...writeUint32Buffer(bytes.length),
+        ...bytes
+      ]);
+    }
 
     const spkiFromPublicKeyED25519 = (pub) => {
       return new Uint8Array([
@@ -842,8 +854,8 @@
       ]);
     };
 
-    const isED25519Key = (key, algo) => {
-      return algo === 'ED25519' && key instanceof Uint8Array;
+    const isED25519Key = (algo) => {
+      return algo === 'ED25519';
     };
 
     /* =========================================================
@@ -906,7 +918,7 @@
         return `ecdsa-sha2-${curve} ${bufferToBase64(blob)}`;
       }
 
-      const raw = isED25519Key(publicKey, algo) ? publicKey : new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
+      const raw = isED25519Key(algo) ? publicKey : new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
       const blob = new Uint8Array([
         ...ssh.string('ssh-ed25519'),
         ...ssh.bytes(raw),
@@ -917,24 +929,6 @@
     /* =========================================================
      * KEY GENERATION
      * ======================================================= */
-    async function generateED25519() {
-      try {
-        return await crypto.subtle.generateKey(
-          {
-            name: 'Ed25519'
-          },
-          true,
-          ['sign', 'verify']
-        );
-      } catch (err) {
-        const privateKey = ed25519.utils.randomSecretKey();
-        return {
-          privateKey,
-          publicKey: ed25519.getPublicKey(privateKey),
-        };
-      }
-    }
-
     async function generateKeyPair(algo, ecdsaSize, rsaSize) {
       if (algo === 'ECDSA') {
         return crypto.subtle.generateKey(
@@ -948,7 +942,11 @@
       }
 
       if (algo === 'ED25519') {
-        return generateED25519();
+        const privateKey = ed25519.utils.randomSecretKey();
+        return {
+          privateKey,
+          publicKey: ed25519.getPublicKey(privateKey),
+        };
       }
 
       return crypto.subtle.generateKey(
@@ -963,20 +961,48 @@
       );
     }
 
+    function encodeOpenSSHED25519(privateKey, publicKey, comment = 'generated-key') {
+      const enc = new TextEncoder();
+
+      const keyType = enc.encode('ssh-ed25519');
+      const privateKeyBuffer = new Uint8Array([...privateKey, ...publicKey]); // 64 bytes
+      const check = crypto.getRandomValues(new Uint32Array(1))[0];
+
+      let privateBlock = new Uint8Array([
+        ...writeUint32Buffer(check),
+        ...writeUint32Buffer(check),
+        ...writeStringBuffer(keyType),
+        ...writeStringBuffer(publicKey),
+        ...writeStringBuffer(privateKeyBuffer),
+        ...writeStringBuffer(enc.encode(comment)),
+      ]);
+
+      const padLen = (8 - (privateBlock.length % 8)) % 8;
+      const padding = Uint8Array.from(Array.from({ length: padLen }, (_, i) => i + 1));
+
+      privateBlock = new Uint8Array([...privateBlock, ...padding]);
+
+      const publicKeyBlob = new Uint8Array([
+        ...writeStringBuffer(keyType),
+        ...writeStringBuffer(publicKey),
+      ]);
+
+      const blob = new Uint8Array([
+        ...enc.encode('openssh-key-v1\0'),
+        ...writeStringBuffer(enc.encode('none')), // cipher
+        ...writeStringBuffer(enc.encode('none')), // kdf
+        ...writeStringBuffer(new Uint8Array([])), // kdf options
+        ...writeUint32Buffer(1),                  // number of keys
+        ...writeStringBuffer(publicKeyBlob),
+        ...writeStringBuffer(privateBlock),
+      ]);
+
+      return formatPEM(bufferToBase64(blob), 'OPENSSH PRIVATE');
+    }
+
     /* =========================================================
      * MAIN HANDLERS
      * ======================================================= */
-    async function generatePrivateKey() {
-      if (state.keyPair == null) {
-        return;
-      }
-
-      const privateKey = isED25519Key(state.keyPair.privateKey, state.algo)
-        ? pkcs8FromPrivateKeyED25519(state.keyPair.privateKey)
-        : await crypto.subtle.exportKey('pkcs8', state.keyPair.privateKey);
-      ui.privateKey.value = formatPEM(bufferToBase64(privateKey), `${KEY_LABELS[state.algo]} PRIVATE`.trim());
-    }
-
     async function generatePublicKey() {
       if (state.keyPair == null) {
         return;
@@ -991,8 +1017,27 @@
         return;
       }
 
-      const publicKey = isED25519Key(state.keyPair.publicKey, state.algo) ? spkiFromPublicKeyED25519(state.keyPair.publicKey) : await crypto.subtle.exportKey('spki', state.keyPair.publicKey);
+      const publicKey = isED25519Key(state.algo)
+        ? spkiFromPublicKeyED25519(state.keyPair.publicKey)
+        : await crypto.subtle.exportKey('spki', state.keyPair.publicKey);
       ui.publicKey.value = formatPEM(bufferToBase64(publicKey), 'PUBLIC');
+    }
+
+    async function generatePrivateKey() {
+      if (state.keyPair == null) {
+        return;
+      }
+      const label = `${KEY_LABELS[state.algo]} PRIVATE`.trim();
+
+      if (isED25519Key(state.algo)) {
+        ui.privateKey.value = ui.sshFormat.checked
+          ? encodeOpenSSHED25519(state.keyPair.privateKey, state.keyPair.publicKey, 'generated-by-web')
+          : formatPEM(bufferToBase64(pkcs8FromPrivateKeyED25519(state.keyPair.privateKey)), label);
+        return;
+      }
+
+      const privateKey = await crypto.subtle.exportKey('pkcs8', state.keyPair.privateKey);
+      ui.privateKey.value = formatPEM(bufferToBase64(privateKey), label);
     }
 
     async function generateKeys() {
@@ -1009,8 +1054,8 @@
         state.ecdsaSize = ecdsaSize;
         state.rsaSize = rsaSize;
 
-        await generatePrivateKey();
         await generatePublicKey();
+        await generatePrivateKey();
       } catch (err) {
         console.error(err);
         showError(`Failed to generate keys: ${err.message || 'Unknown error'}`);
@@ -1092,7 +1137,10 @@
      * EVENTS
      * ======================================================= */
     ui.algorithm.addEventListener('change', updateKeySizeOptions);
-    ui.sshFormat.addEventListener('change', generatePublicKey);
+    ui.sshFormat.addEventListener('change', () => {
+      generatePublicKey();
+      generatePrivateKey();
+    });
     ui.generateBtn.addEventListener('click', generateKeys);
     ui.copyPublicBtn.addEventListener('click', () => copyToClipboard('publicKey', 'copyPublicBtn'));
     ui.copyPrivateBtn.addEventListener('click', () => copyToClipboard('privateKey', 'copyPrivateBtn'));
