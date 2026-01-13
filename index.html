@@ -739,7 +739,7 @@
       '521': 'nistp521',
     };
 
-    const KEY_LABELS = {
+    const SSH_KEY_LABELS = {
       ECDSA: 'EC',
       ED25519: '',
       RSA: 'RSA',
@@ -1027,11 +1027,11 @@
       if (state.keyPair == null) {
         return;
       }
-      const label = `${KEY_LABELS[state.algo]} PRIVATE`.trim();
 
+      const label = `${ui.sshFormat.checked ? SSH_KEY_LABELS[state.algo] : ''} PRIVATE`.trim();
       if (isED25519Key(state.algo)) {
         ui.privateKey.value = ui.sshFormat.checked
-          ? encodeOpenSSHED25519(state.keyPair.privateKey, state.keyPair.publicKey, 'generated-by-web')
+          ? encodeOpenSSHED25519(state.keyPair.privateKey, state.keyPair.publicKey)
           : formatPEM(bufferToBase64(pkcs8FromPrivateKeyED25519(state.keyPair.privateKey)), label);
         return;
       }
